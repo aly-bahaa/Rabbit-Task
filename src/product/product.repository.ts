@@ -46,4 +46,22 @@ export class ProductRepository {
       take,
     });
   }
+
+  async countAll(): Promise<number> {
+    return this.prisma.product.count();
+  }
+
+  async countByFilters(filters: {
+    categories?: string[];
+    name?: string;
+    area?: string;
+  }): Promise<number> {
+    return this.prisma.product.count({
+      where: {
+        category: filters.categories ? { in: filters.categories } : undefined,
+        name: filters.name ? { contains: filters.name } : undefined,
+        area: filters.area ? { contains: filters.area } : undefined,
+      },
+    });
+  }
 }
