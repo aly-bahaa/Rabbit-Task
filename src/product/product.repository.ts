@@ -6,8 +6,11 @@ import { Product } from '@prisma/client';
 export class ProductRepository {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(): Promise<Product[]> {
-    return this.prisma.product.findMany();
+  async findAll(skip: number, take: number): Promise<Product[]> {
+    return this.prisma.product.findMany({
+      skip,
+      take,
+    });
   }
 
   async findById(id: number): Promise<Product | null> {
@@ -22,5 +25,25 @@ export class ProductRepository {
     area: string;
   }): Promise<Product> {
     return this.prisma.product.create({ data });
+  }
+
+  async findByFilters(
+    filters: {
+      categories?: string[];
+      name?: string;
+      area?: string;
+    },
+    skip: number,
+    take: number,
+  ): Promise<Product[]> {
+    return this.prisma.product.findMany({
+      where: {
+        category: filters.categories ? { in: filters.categories } : undefined,
+        name: filters.name ? { contains: filters.name } : undefined,
+        area: filters.area ? { contains: filters.area } : undefined,
+      },
+      skip,
+      take,
+    });
   }
 }
