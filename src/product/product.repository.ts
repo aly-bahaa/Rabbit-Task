@@ -64,4 +64,25 @@ export class ProductRepository {
       },
     });
   }
+  async findMostOrdered(area: string): Promise<any[]> {
+    return await this.prisma.$queryRaw`
+    SELECT 
+      p.id AS product_id,
+      p.name AS product_name,
+      p.category AS product_category,
+      p.area AS product_area,
+      SUM(oi.quantity) AS total_quantity_ordered
+    FROM 
+      Product p
+    JOIN 
+      OrderItem oi ON p.id = oi.productId
+    WHERE 
+      p.area = ${area}
+    GROUP BY 
+      p.id, p.name, p.category, p.area
+    ORDER BY 
+      total_quantity_ordered DESC
+    LIMIT 10;
+  `;
+  }
 }

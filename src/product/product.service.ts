@@ -63,4 +63,8 @@ export class ProductService {
     }
     return product;
   }
+
+  async getMostOrderedProducts(area): Promise<ProductDTO[]> {
+    return this.productsRepository.findMostOrdered(area);
+  }
 }
