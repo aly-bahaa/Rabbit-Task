@@ -65,6 +65,7 @@ export class ProductRepository {
     });
   }
   async findMostOrdered(area: string): Promise<any[]> {
+    //console.log(`Fetching data from the database for area: ${area}`);
     return await this.prisma.$queryRaw`
     SELECT 
       p.id AS product_id,

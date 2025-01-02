@@ -1,8 +1,17 @@
-import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { GetAllProductsDTO } from './dto/get-all-products.dto';
 import { GetProductsResponseDTO } from './dto/get-products-response.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('product')
 export class ProductController {
@@ -16,7 +25,9 @@ export class ProductController {
   }
 
   @Get('mostOrdered')
+  @UseInterceptors(CacheInterceptor)
   async getMostOrderedProducts(@Query('area') area: string) {
+    console.log();
     if (!area) {
       throw new Error('Area query parameter is required');
     }
