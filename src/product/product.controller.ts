@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -29,7 +30,7 @@ export class ProductController {
   async getMostOrderedProducts(@Query('area') area: string) {
     console.log();
     if (!area) {
-      throw new Error('Area query parameter is required');
+      throw new BadRequestException('Area query parameter is required');
     }
     return this.productsService.getMostOrderedProducts(area);
   }
