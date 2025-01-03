@@ -1,81 +1,182 @@
+# Project Readme
 
-# Rabbit Coding Challenge
-
-## Objective
-
-The goal of this task is to evaluate your coding abilities and assess your understanding of business requirements by simulating a real-world scenario at Rabbit. This task is designed to test your skills in developing a feature for Rabbit while also optimizing existing code for performance. The task should take no more than 3-4 hours to complete.
-
-Please ensure that the code you write is production-ready. If you make any compromises or assumptions during the task, document them. Be clear about any steps you'd take if you had more time to improve the solution.
+This document details the tasks, implementations, and solutions performed in this project.
 
 ---
 
-## Business Context
+# Quick Summary:
 
-Rabbit operates multiple stores across the region, processing thousands of orders each day across various locations. The company is working to enhance its system to provide a better user experience for customers.
+- **Docker for MySQL Database Connection**:  
+  I utilized Docker to establish a connection to a MySQL database.
 
----
+- **Top 10 Most Frequently Ordered API**:  
+  I implemented an API endpoint to retrieve the top 10 most frequently ordered items.
 
-## Requirements
+- **Caching for Efficiency**:  
+  To ensure the API can handle millions of requests efficiently, I implemented caching mechanisms.
 
-### 1. **Top 10 Most Frequently Ordered Products API**
+- **API Documentation with Swagger**:  
+  I documented the API using Swagger, accessible at `/api`.
 
-- Develop an API that returns the **top 10 most frequently ordered products** in a specific area. The area can be identified based on the location or region.
-- This API will be integrated into a mobile application and displayed on the user’s home screen.
-- The API should be designed to handle millions of requests efficiently, as Rabbit’s homepage experiences significant traffic.
+- **Optimized Get All Products API**:  
+  I optimized and fixed the "Get All Products" API to work with or without filters.
 
-### 2. **Optimizing a Poorly Implemented List Products API**
+- **Create Order API with Pushover Integration**:  
+  I implemented the "Create Order" API and integrated it with the Pushover library for real-time notifications.
 
-- There is an existing API to list products (/products), but it has **poor performance** due to inefficient database queries and bad code practices. You are tasked with reviewing and optimizing this API for better performance.
-- Feel free to change the API response and request contracts (eg. DTO, Filters, ..etc) for the seek of making the API more efficient and reliable
-- Refactor and improve the performance of the current implementation to ensure it can handle large-scale traffic efficiently.
+## Task 1: **Top 10 Most Ordered Products API**
 
----
+### Steps Taken:
 
-## Technical Requirements
+1. **SQL Query**:
 
-### 1. **Environment Setup**
+   - Wrote a query to retrieve the top 10 most ordered products in a given area (assumed as the product's area).
 
-- Install **Node.js** (version 20 or higher).
-- Set up any **SQL database** (such as PostgreSQL or MySQL) to store product and order information.
-- Review and understand the dependencies in the provided `package.json`. Identify libraries you may use to improve performance.
-- Run `yarn prisma:generate`
-- Run `yarn migrate:dev`
-- Run `yarn seed`
+2. **Repository Implementation**:
 
-### 2. **Test Cases**
+   - Added `findMostOrdered(area: string): Promise<any[]>` function in the `productRepository` to execute the query.
 
-- Write the necessary test cases to ensure the correctness of your implementation.
-- Ensure that the **API for fetching the top 10 most ordered products** is accurate and performs as expected.
+3. **Service Layer**:
 
-### 3. **Documentation**
+   - Implemented a service function to call the repository:
+     ```typescript
+     async getMostOrderedProducts(area: string): Promise<ProductDTO[]> {
+       return this.productsRepository.findMostOrdered(area);
+     }
+     ```
 
-- Document any **assumptions** made during the task.
-- If you had more time, describe additional optimizations you would consider.
+4. **Controller Endpoint**:
 
----
+   - Added a route: `/product/mostOrdered?area="any-area"`.
 
-## Bonus Points (Optional)
+5. **Caching Mechanism**:
 
-- If you have more time, consider **integration with any notification library** (e.g., **Pushover**) to receive notifications after a new order is created.
+   - Introduced NEST's in-memory cache-manager.
+   - Tested caching by setting a TTL of 5 seconds and verified database hits occurred only once within that interval.
 
----
+6. **Error Handling**:
 
-## Submission Instructions
+   - Ensured all necessary error handling was implemented.
 
-- Ensure your code is clean, modular, and easy to maintain.
-- Provide clear instructions on how to set up and run your code.
-- Commit and push your work to a public repository (GitHub or GitLab), and provide a link to the repository.
+7. **Unit Testing**:
 
----
+   - Verified correct behavior with two test cases:
+     - Returns top products for a given area.
+     - Throws an error if the area query is missing.
 
-## Evaluation Criteria
-
-- Code quality, modularity, and readability.
-- Efficient handling of performance-related issues.
-- Proper handling of database queries and optimizations.
-- Correctness of the implemented solution.
-- Documentation of assumptions and possible improvements.
+8. **API Documentation**:
+   - Documented the API using Swagger.
 
 ---
 
-Good luck with the challenge! We look forward to reviewing your submission.
+## Task 2: **Fix and Optimize `/products` API**
+
+### Problems Identified:
+
+1. **Filtering by Categories**:
+
+   - Incorrect use of `findOne` instead of `findMany`.
+   - Always returned `this.prismaService.product.findMany()` regardless of filters, causing unnecessary database calls.
+
+2. **Inconsistent Repository Usage**:
+
+   - `productService` sometimes bypassed the repository and used `prismaService` directly.
+
+3. **Missing Features**:
+
+   - No pagination.
+   - Filtering limited to categories (e.g., no filtering by name or area).
+
+4. **Error Handling**:
+   - Missing error handling for scenarios like product ID not found.
+
+### Fixes Implemented:
+
+1. **Query Optimization**:
+
+   - Replaced the for-loop with `findMany` using a `where` clause for filtering by categories.
+
+2. **Repository Enhancements**:
+
+   - Added `findByCategories` function in `productRepository`.
+
+3. **Service Improvements**:
+
+   - Ensured `productService` adheres to the repository pattern.
+
+4. **Enhanced Filtering**:
+
+   - Added support for filtering by name and area.
+
+5. **Pagination Support**:
+
+   - Applied pagination to all queries.
+   - Clients can specify `page` and `limit` via query parameters.
+
+6. **Response DTO**:
+
+   - Created `GetProductsResponseDTO` with metadata:
+     - `total`, `page`, `limit`, `totalPages`.
+
+7. **Metadata Calculation**:
+   - Implemented metadata calculation in the `productRepository`.
+
+---
+
+## Bonus Task: **Create Order API**
+
+### Implementation Details:
+
+1. **DTOs**:
+
+   - Created `CreateOrderDTO` and `OrderDTO`.
+
+2. **Endpoint**:
+
+   - Implemented `POST /order`.
+
+3. **Request Body Example**:
+   ```json
+   {
+     "customerId": 1,
+     "items": [
+       {
+         "productId": 1,
+         "quantity": 1
+       }
+     ]
+   }
+   ```
+4. **Service Layer**
+
+   - Validation of Products:
+     - Implemented a function in `orderService` to validate the existence of each product in the request.
+     - Handles scenarios where the `items` array is empty.
+     - Throws appropriate errors if validation fails.
+
+5. **Repository Layer**
+   - Order Creation:
+     - Created a `create` function in `orderRepository` to:
+     - Save the order details in the database.
+     - Associate order items with the order record.
+
+## Notification Integration
+
+- **Pushover Integration:**
+  - Integrated the Pushover library to send mobile notifications upon successful order creation.
+  - Example notification: `"New order has been created from customer {customer id}"`
+
+---
+
+## Potential improvements
+
+1. Use Reddis for persistent caching
+2. Add code comments to explain the code
+
+## Packages added:
+
+1. @nestjs/swagger
+2. swagger-ui-express
+3. class-transformer
+4. node-pushover
+5. @nestjs/testing upgraded from "^10.0.0" to "^10.4.15"
